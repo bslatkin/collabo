@@ -1,0 +1,24 @@
+body, html {
+  overflow: hidden;
+  white-space: nowrap;
+  -webkit-user-select: none;
+}
+.grid {
+  line-height: 10px;
+  border: 1px solid #ccc;
+  display: inline-block;
+}
+.pixel {
+  width: 15px;
+  height: 15px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  display: inline-block;
+}
+.pixel.end-of-row {
+  display: inline-block;
+}
+.filled {
+  background-color: #000;
+}
