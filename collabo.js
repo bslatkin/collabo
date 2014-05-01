@@ -6,6 +6,7 @@ var PaintMode = {
     NONE: 'none',
 };
 
+
 function PaintState() {
     this.mode = PaintMode.NONE;
 }
@@ -23,74 +24,111 @@ PaintState.prototype.endMousePainting = function() {
 
 var Pixel = React.createClass({
     getInitialState: function() {
-        return {filled: false};
+        return {paint: PaintMode.EMPTY};
     },
     handleMouseDown: function(event) {
-        var nextState = !this.state.filled;
-        this.props.paintState.startMousePainting(
-            nextState ? PaintMode.FILLED : PaintMode.EMPTY);
-        this.setState({filled: nextState});
+        var nextState = PaintMode.FILLED;
+        if (this.state.paint == PaintMode.FILLED) {
+            nextState = PaintMode.EMPTY;
+        }
+        this.props.paintState.startMousePainting(nextState);
+        this.setState({paint: nextState});
+        this.props.triggerSiblings(
+            this, this.props.x, this.props.y, nextState);
     },
     handleMouseUp: function(event) {
         this.props.paintState.endMousePainting();
     },
     handleMouseEnter: function(event) {
-        var mode = this.props.paintState.mode;
-        if (mode == PaintMode.FILLED) {
-            this.setState({filled: true});
-        } else if (mode == PaintMode.EMPTY) {
-            this.setState({filled: false});
+        var nextState = this.props.paintState.mode;
+        if (nextState == PaintMode.NONE) {
+            return;
         }
+        this.setState({paint: nextState});
+        this.props.triggerSiblings(
+            this, this.props.x, this.props.y, nextState);
     },
     render: function() {
-        var filledClass = this.state.filled ? 'filled' : 'empty';
         return (
-            <div className={'pixel ' + filledClass}
+            <div className={
+                    'pixel ' +
+                    this.state.paint.toLowerCase() +
+                    (this.props.startOfRow ? ' start-of-row' : '')}
                  onMouseDown={this.handleMouseDown}
                  onMouseLeave={this.handleMouseLeave}
-                 onMouseEnter={this.handleMouseEnter}>
-            </div>
+                 onMouseEnter={this.handleMouseEnter} />
         )
     }
 });
 
 
 var Grid = React.createClass({
+    handleMouseDown: function() {
+        this.props.paintState.startMousePainting(PaintMode.FILLED);
+    },
     handleMouseLeave: function() {
         this.props.paintState.endMousePainting();
     },
     handleMouseUp: function() {
         this.props.paintState.endMousePainting();
     },
-    render: function() {
-        var pixels = [];
-        for (var i = 0; i < this.props.height; i++) {
-            for (var j = 0; j < this.props.width; j++) {
-                pixels.push(
-                    <Pixel x={i}
-                           y={j}
-                           endOfRow={j == (this.props.width - 1)}
-                           paintState={this.props.paintState} />
-                );
+    triggerSiblings: function(sender, x, y, mode) {
+        var penWidthSquared = Math.pow(this.props.penWidth, 2);
+        React.Children.forEach(this.props.children, function(child) {
+            if (sender === child) {
+                return;
             }
-            pixels.push(
-                <br/>
-            );
-        }
+            var distanceX = Math.pow(child.props.x - x, 2);
+            var distanceY = Math.pow(child.props.y - y, 2);
+            var distanceSquared = distanceX + distanceY;
+            if (distanceSquared <= penWidthSquared) {
+                child.setState({paint: mode});
+            }
+        });
+    },
+    render: function() {
         return (
             <div className="grid"
-                 onMouseDown={this.handleMouseDown}
                  onMouseLeave={this.handleMouseLeave}
                  onMouseUp={this.handleMouseUp}>
-                {pixels}
+                {this.props.children}
             </div>
         )
     }
 });
 
 
-var paintState = new PaintState();
+var Controller = React.createClass({
+    paintState: new PaintState(),
+    triggerSiblings: function(sender, x, y, nextState) {
+        this.refs.grid.triggerSiblings(sender, x, y, nextState);
+    },
+    render: function() {
+        var children = [];
+        for (var i = 0; i < this.props.height; i++) {
+            for (var j = 0; j < this.props.width; j++) {
+                children.push(
+                    <Pixel x={i}
+                           y={j}
+                           triggerSiblings={this.triggerSiblings}
+                           startOfRow={j == 0}
+                           paintState={this.paintState} />
+                );
+            }
+        }
+        return (
+            <Grid ref="grid"
+                  paintState={this.paintState}
+                  penWidth={this.props.penWidth}>
+                {children}
+            </Grid>
+        )
+    }
+});
+
 
 React.renderComponent(
-    <Grid width="100" height="100" paintState={paintState} />,
+    <Controller width={100}
+                height={100}
+                penWidth={3.25} />,
     document.getElementById('content'));
