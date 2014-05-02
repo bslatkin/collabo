@@ -222,6 +222,9 @@ var Grid = React.createClass({
 });
 
 
+React.initializeTouchEvents(true);
+
+
 React.renderComponent(
     <Grid width={200}
           height={200}
