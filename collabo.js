@@ -1,4 +1,5 @@
 /** @jsx React.DOM */
+// Copyright 2014 Brett Slatkin
 
 var PaintMode = {
     FILLED: 'filled',
