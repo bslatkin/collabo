@@ -20,13 +20,13 @@ var Pixel = React.createClass({
             nextState = PaintMode.EMPTY;
         }
         this.props.startMousePainting(nextState);
-        this.props.markPixel(this.props.x, this.props.y);
+        this.props.strokePixel(this.props.x, this.props.y);
     },
     handleMouseUp: function(event) {
         this.props.endMousePainting();
     },
     handleMouseEnter: function(event) {
-        this.props.markPixel(this.props.x, this.props.y);
+        this.props.strokePixel(this.props.x, this.props.y);
     },
     render: function() {
         return (
@@ -53,18 +53,18 @@ var RenderStats = React.createClass({
     increment: function() {
         this.renders++;
     },
-    reset: function() {
+    clear: function() {
         this.renders = 0;
         this.when = (new Date()).getTime();
     },
     componentWillMount: function() {
-        this.reset();
+        this.clear();
         setInterval(this.sampleRenders, 500);
     },
     sampleRenders: function() {
         var oldCount = this.renders;
         var timeDiff = (new Date()).getTime() - this.when;
-        this.reset();
+        this.clear();
         this.setState({rate: oldCount / timeDiff * 1000.0});
     },
     render: function() {
@@ -93,6 +93,23 @@ var Grid = React.createClass({
     handleMouseUp: function() {
         this.endMousePainting();
     },
+    handleResetButton: function(event) {
+        event.preventDefault();
+        this.mode = PaintMode.EMPTY;
+        for (var i = 0; i < this.props.width; i++) {
+            for (var j = 0; j < this.props.height; j++) {
+                this.fillPixel(i, j);
+            }
+        }
+        this.mode = PaintMode.NONE;
+    },
+    fillPixel: function(x, y) {
+        var pixel = this.refs['pixel-' + x + '-' + y];
+        if (pixel.state.paint != this.mode) {
+            pixel.paint(this.mode);
+            this.refs.stats.increment();
+        }
+    },
     markPaintBrush: function(x, y) {
         var penWidthSquared = Math.pow(this.props.penWidth, 2);
         var minX = Math.max(
@@ -110,16 +127,12 @@ var Grid = React.createClass({
                 var distanceY = Math.pow(j - y, 2);
                 var distanceSquared = distanceX + distanceY;
                 if (distanceSquared <= penWidthSquared) {
-                    var pixel = this.refs['pixel-' + i + '-' + j];
-                    if (pixel.state.paint != this.mode) {
-                        pixel.paint(this.mode);
-                        this.refs.stats.increment();
-                    }
+                    this.fillPixel(i, j);
                 }
             }
         }
     },
-    markPixel: function(x, y) {
+    strokePixel: function(x, y) {
         if (this.mode == PaintMode.NONE) {
             return;
         }
@@ -174,7 +187,7 @@ var Grid = React.createClass({
                            ref={'pixel-' + i + '-' + j}
                            startMousePainting={this.startMousePainting}
                            endMousePainting={this.endMousePainting}
-                           markPixel={this.markPixel}
+                           strokePixel={this.strokePixel}
                            startOfRow={i == 0} />
                 );
             }
@@ -182,6 +195,9 @@ var Grid = React.createClass({
         return (
             <div class="everything">
                 <RenderStats ref="stats" />
+                <div>
+                    <button onClick={this.handleResetButton}>Clear</button>
+                </div>
                 <div className="grid"
                      onMouseLeave={this.handleMouseLeave}
                      onMouseUp={this.handleMouseUp}
