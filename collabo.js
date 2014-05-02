@@ -30,6 +30,7 @@ var Pixel = React.createClass({
         this.props.strokePixel(this.props.x, this.props.y);
     },
     render: function() {
+        this.props.incrementRenderCount();
         return (
             <div className={
                     'pixel ' +
@@ -69,6 +70,7 @@ var RenderStats = React.createClass({
         this.setState({rate: oldCount / timeDiff * 1000.0});
     },
     render: function() {
+        this.increment();
         return (
             <div>
                 Renders per second: {this.state.rate}
@@ -108,7 +110,6 @@ var Grid = React.createClass({
         var pixel = this.refs['pixel-' + x + '-' + y];
         if (pixel.state.paint != this.mode) {
             pixel.paint(this.mode);
-            this.refs.stats.increment();
         }
     },
     markPaintBrush: function(x, y) {
@@ -178,7 +179,13 @@ var Grid = React.createClass({
 
         this.lastMark = thisMark;
     },
+    incrementRenderCount: function() {
+        if (this.refs.stats) {
+            this.refs.stats.increment();
+        }
+    },
     render: function() {
+        this.incrementRenderCount();
         var children = [];
         for (var j = 0; j < this.props.height; j++) {
             for (var i = 0; i < this.props.width; i++) {
@@ -188,6 +195,7 @@ var Grid = React.createClass({
                            y={j}
                            key={key}
                            ref={key}
+                           incrementRenderCount={this.incrementRenderCount}
                            startMousePainting={this.startMousePainting}
                            endMousePainting={this.endMousePainting}
                            strokePixel={this.strokePixel}
