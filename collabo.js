@@ -16,7 +16,7 @@ var Pixel = React.createClass({
     },
     handleMouseDown: function(event) {
         var nextState = PaintMode.FILLED;
-        if (this.props.paint == PaintMode.FILLED) {
+        if (this.state.paint == PaintMode.FILLED) {
             nextState = PaintMode.EMPTY;
         }
         this.props.startMousePainting(nextState);
@@ -34,6 +34,8 @@ var Pixel = React.createClass({
                     'pixel ' +
                     this.state.paint.toLowerCase() +
                     (this.props.startOfRow ? ' start-of-row' : '')}
+                 data-x={this.props.x}
+                 data-y={this.props.y}
                  onMouseDown={this.handleMouseDown}
                  onMouseLeave={this.handleMouseLeave}
                  onMouseEnter={this.handleMouseEnter} />
@@ -84,8 +86,6 @@ var Grid = React.createClass({
             return;
         }
 
-        console.log('Got mark for', x, y, this.lastMark);
-
         var thisMark = {x: x, y: y};
 
         if (!this.lastMark) {
@@ -101,45 +101,40 @@ var Grid = React.createClass({
         var endX = x;
         var startY = this.lastMark.y;
         var endY = y;
-
         var stepX = endX > startX ? 1 : -1;
         var stepY = endY > startY ? 1 : -1;
-
         var slope = (endY - startY) / (endX - startX);
-        //console.log('X', startX, endX, 'Y', startY, endY, 'Slope is', slope, 'step', stepX, stepY);
-
         var i = startX;
         var j = startY;
+
         var z = 0;
 
-        while ((endX - i) != 0 && (endY - j) != 0 && z < 1000) {
-            //console.log('X diff is', (endX - i), 'step', stepX);
-            //console.log('Y diff is', (endY - j), 'step', stepY);
+        while (((endX - i) != 0 || (endY - j) != 0) && z < 100) {
+            this.markPaintBrush(i, j);
+
             var nextX = i + stepX;
-            var nextY = startY + (nextX - startX) * slope;
-            if (slope === Infinity || slope === -Infinity) {
-                nextY = j + stepY;
+            var nextY = j;
+            if (slope !== Infinity || slope !== -Infinity) {
+                nextY = startY + (nextX - startX) * slope;
             }
+
             var diff = nextY - j;
-            //console.log('Next', nextX, nextY, 'current', i, j, 'diff', diff);
+
             if (diff < -1 || diff > 1) {
-                this.markPaintBrush(i, j);
-                //console.log('Incrementing Y', j, 'to', j + stepY);
                 j += stepY;
             } else {
-                this.markPaintBrush(i, j);
-                //console.log('Incrementing X', i, 'to', i + stepX);
                 i += stepX;
             }
             z++;
         }
 
+        this.markPaintBrush(i, j);
         this.lastMark = thisMark;
     },
     render: function() {
         var children = [];
-        for (var i = 0; i < this.props.height; i++) {
-            for (var j = 0; j < this.props.width; j++) {
+        for (var j = 0; j < this.props.height; j++) {
+            for (var i = 0; i < this.props.width; i++) {
                 children.push(
                     <Pixel x={i}
                            y={j}
@@ -147,7 +142,7 @@ var Grid = React.createClass({
                            startMousePainting={this.startMousePainting}
                            endMousePainting={this.endMousePainting}
                            markPixel={this.markPixel}
-                           startOfRow={j == 0} />
+                           startOfRow={i == 0} />
                 );
             }
         }
