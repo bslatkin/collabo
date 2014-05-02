@@ -70,7 +70,7 @@ var RenderStats = React.createClass({
     },
     render: function() {
         return (
-            <div class="stats">
+            <div>
                 Renders per second: {this.state.rate}
             </div>
         )
@@ -182,10 +182,12 @@ var Grid = React.createClass({
         var children = [];
         for (var j = 0; j < this.props.height; j++) {
             for (var i = 0; i < this.props.width; i++) {
+                var key = 'pixel-' + i + '-' + j;
                 children.push(
                     <Pixel x={i}
                            y={j}
-                           ref={'pixel-' + i + '-' + j}
+                           key={key}
+                           ref={key}
                            startMousePainting={this.startMousePainting}
                            endMousePainting={this.endMousePainting}
                            strokePixel={this.strokePixel}
@@ -194,7 +196,7 @@ var Grid = React.createClass({
             }
         }
         return (
-            <div class="everything">
+            <div>
                 <RenderStats ref="stats" />
                 <div>
                     <button onClick={this.handleResetButton}>Clear</button>
