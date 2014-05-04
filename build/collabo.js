@@ -8,7 +8,7 @@ var PaintMode = {
 };
 
 
-var Pixel = React.createClass({
+var Pixel = React.createClass({displayName: 'Pixel',
     getInitialState: function() {
         return {paint: PaintMode.EMPTY};
     },
@@ -35,21 +35,21 @@ var Pixel = React.createClass({
     render: function() {
         this.props.incrementRenderCount();
         return (
-            <div className={
+            React.DOM.div( {className:
                     'pixel ' +
                     this.state.paint.toLowerCase() +
-                    (this.props.startOfRow ? ' start-of-row' : '')}
-                 data-x={this.props.x}
-                 data-y={this.props.y}
-                 onMouseDown={this.handleMouseDown}
-                 onMouseLeave={this.handleMouseLeave}
-                 onMouseEnter={this.handleMouseEnter} />
+                    (this.props.startOfRow ? ' start-of-row' : ''),
+                 'data-x':this.props.x,
+                 'data-y':this.props.y,
+                 onMouseDown:this.handleMouseDown,
+                 onMouseLeave:this.handleMouseLeave,
+                 onMouseEnter:this.handleMouseEnter} )
         )
     }
 });
 
 
-var RenderStats = React.createClass({
+var RenderStats = React.createClass({displayName: 'RenderStats',
     renders: 0,
     when: 0,
     getInitialState: function() {
@@ -75,15 +75,15 @@ var RenderStats = React.createClass({
     render: function() {
         this.increment();
         return (
-            <div>
-                Renders per second: {this.state.rate}
-            </div>
+            React.DOM.div(null, 
+                "Renders per second: ", this.state.rate
+            )
         )
     }
 });
 
 
-var Grid = React.createClass({
+var Grid = React.createClass({displayName: 'Grid',
     mode: PaintMode.NONE,
     lastMark: null,
     startMousePainting: function(mode) {
@@ -194,32 +194,32 @@ var Grid = React.createClass({
             for (var i = 0; i < this.props.width; i++) {
                 var key = 'pixel-' + i + '-' + j;
                 children.push(
-                    <Pixel x={i}
-                           y={j}
-                           key={key}
-                           ref={key}
-                           incrementRenderCount={this.incrementRenderCount}
-                           startMousePainting={this.startMousePainting}
-                           endMousePainting={this.endMousePainting}
-                           strokePixel={this.strokePixel}
-                           startOfRow={i == 0} />
+                    Pixel( {x:i,
+                           y:j,
+                           key:key,
+                           ref:key,
+                           incrementRenderCount:this.incrementRenderCount,
+                           startMousePainting:this.startMousePainting,
+                           endMousePainting:this.endMousePainting,
+                           strokePixel:this.strokePixel,
+                           startOfRow:i == 0} )
                 );
             }
         }
         return (
-            <div>
-                <RenderStats ref="stats" />
-                <div>
-                    <button onClick={this.handleResetButton}>Clear</button>
-                </div>
-                <div className="grid"
-                     onMouseLeave={this.handleMouseLeave}
-                     onMouseUp={this.handleMouseUp}
-                     paintState={this.paintState}
-                     penWidth={this.props.penWidth}>
-                    {children}
-                </div>
-            </div>
+            React.DOM.div(null, 
+                RenderStats( {ref:"stats"} ),
+                React.DOM.div(null, 
+                    React.DOM.button( {onClick:this.handleResetButton}, "Clear")
+                ),
+                React.DOM.div( {className:"grid",
+                     onMouseLeave:this.handleMouseLeave,
+                     onMouseUp:this.handleMouseUp,
+                     paintState:this.paintState,
+                     penWidth:this.props.penWidth}, 
+                    children
+                )
+            )
         )
     }
 });
@@ -229,7 +229,7 @@ React.initializeTouchEvents(true);
 
 
 React.renderComponent(
-    <Grid width={200}
-          height={200}
-          penWidth={2.25} />,
+    Grid( {width:200,
+          height:200,
+          penWidth:2.25} ),
     document.getElementById('content'));
